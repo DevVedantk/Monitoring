@@ -1,0 +1,53 @@
+services:
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    ports:
+      - "127.0.0.1:9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+    restart: unless-stopped
+
+  node-exporter:
+    image: prom/node-exporter
+    container_name: node-exporter
+    ports:
+      - "127.0.0.1:9100:9100"
+    restart: unless-stopped
+
+  # Reads Docker's stats API and exposes per-container metrics for Prometheus.
+  docker-exporter:
+    image: ghcr.io/dlepaux/docker-exporter:1.5.3
+    container_name: docker-exporter
+    group_add:
+      - "0"
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+
+  # Example workloads for validating container-level monitoring.
+  sample-nginx:
+    image: nginx:alpine
+    container_name: cloudpulse-nginx
+    ports:
+      - "127.0.0.1:8081:80"
+    restart: unless-stopped
+
+  sample-redis:
+    image: redis:alpine
+    container_name: cloudpulse-redis
+    restart: unless-stopped
+
+  sample-caddy:
+    image: caddy:alpine
+    container_name: cloudpulse-caddy
+    ports:
+      - "127.0.0.1:8082:80"
+    restart: unless-stopped
+
+volumes:
+  prometheus_data:
